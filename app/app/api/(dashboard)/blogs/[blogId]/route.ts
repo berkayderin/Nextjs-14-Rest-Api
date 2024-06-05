@@ -106,3 +106,44 @@ export const PATCH = async (request: Request, context: { params: any }) => {
 		return new NextResponse('Blog güncellenirken bir hata oluştu' + error.message, { status: 500 })
 	}
 }
+
+// blog silme route
+export const DELETE = async (request: Request, context: { params: any }) => {
+	const { blogId } = context.params
+
+	try {
+		const { searchParams } = new URL(request.url)
+		const userId = searchParams.get('userId')
+
+		if (!userId || !Types.ObjectId.isValid(userId)) {
+			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bilgileri geçersiz' }), { status: 400 })
+		}
+
+		if (!blogId || !Types.ObjectId.isValid(blogId)) {
+			return new NextResponse(JSON.stringify({ message: 'Blog bilgileri geçersiz' }), { status: 400 })
+		}
+
+		await connect()
+
+		const user = await User.findById(userId)
+
+		if (!user) {
+			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bulunamadı' }), { status: 404 })
+		}
+
+		const blog = await Blog.findOne({
+			_id: blogId,
+			user: userId
+		})
+
+		if (!blog) {
+			return new NextResponse(JSON.stringify({ message: 'Blog bulunamadı' }), { status: 404 })
+		}
+
+		await Blog.findByIdAndDelete(blogId)
+
+		return new NextResponse(JSON.stringify({ message: 'Blog başarıyla silindi' }), { status: 200 })
+	} catch (error: any) {
+		return new NextResponse('Blog silinirken bir hata oluştu' + error.message, { status: 500 })
+	}
+}

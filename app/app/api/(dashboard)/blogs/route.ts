@@ -14,6 +14,9 @@ export const GET = async (request: Request) => {
 
 		const searchKeywords = searchParams.get('keywords')
 
+		const startDate = searchParams.get('startDate')
+		const endDate = searchParams.get('endDate')
+
 		if (!userId || !Types.ObjectId.isValid(userId)) {
 			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bilgileri geçersiz' }), { status: 400 })
 		}
@@ -47,9 +50,30 @@ export const GET = async (request: Request) => {
 				{ title: { $regex: searchKeywords, $options: 'i' } }, // i -> büyük küçük harf duyarlılığı kaldırır
 				{ description: { $regex: searchKeywords, $options: 'i' } }
 			]
+		} else if (!searchKeywords && !categoryId) {
+			return new NextResponse(
+				JSON.stringify({ message: 'Arama yapmak için anahtar kelime veya kategori belirtmelisiniz' }),
+				{ status: 400 }
+			)
 		}
 
-		const blogs = await Blog.find(filter)
+		// TODO: startDate ve endDate arasındaki blogları getir
+		if (startDate && endDate) {
+			filter.createdAt = {
+				$gte: new Date(startDate),
+				$lte: new Date(endDate)
+			}
+		} else if (startDate) {
+			filter.createdAt = {
+				$gte: new Date(startDate)
+			}
+		} else if (endDate) {
+			filter.createdAt = {
+				$lte: new Date(endDate)
+			}
+		}
+
+		const blogs = await Blog.find(filter).sort({ createdAt: 'asc' })
 
 		return new NextResponse(JSON.stringify({ blogs }), { status: 200 })
 	} catch (error: any) {

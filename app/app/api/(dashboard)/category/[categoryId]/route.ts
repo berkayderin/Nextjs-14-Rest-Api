@@ -4,6 +4,7 @@ import { Types } from 'mongoose'
 import User from '@/lib/modals/user'
 import connect from '@/lib/db'
 
+// kategori güncelle route
 export const PATCH = async (request: Request, context: { params: any }) => {
 	const { categoryId } = context.params
 
@@ -45,5 +46,43 @@ export const PATCH = async (request: Request, context: { params: any }) => {
 		})
 	} catch (error: any) {
 		return new NextResponse('Kategori güncellenirken bir hata oluştu' + error.message, { status: 500 })
+	}
+}
+
+// kategori silme route
+export const DELETE = async (request: Request, context: { params: any }) => {
+	const { categoryId } = context.params
+
+	try {
+		const { searchParams } = new URL(request.url)
+		const userId = searchParams.get('userId')
+
+		if (!userId || !Types.ObjectId.isValid(userId)) {
+			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bilgileri geçersiz' }), { status: 400 })
+		}
+
+		if (!categoryId || !Types.ObjectId.isValid(categoryId)) {
+			return new NextResponse(JSON.stringify({ message: 'Kategori bilgileri geçersiz' }), { status: 400 })
+		}
+
+		await connect()
+
+		const user = await User.findById(userId)
+
+		if (!user) {
+			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bulunamadı' }), { status: 404 })
+		}
+
+		const category = await Category.findOne({ _id: categoryId, user: userId })
+
+		if (!category) {
+			return new NextResponse(JSON.stringify({ message: 'Kategori bulunamadı' }), { status: 404 })
+		}
+
+		await Category.findByIdAndDelete(categoryId)
+
+		return new NextResponse(JSON.stringify({ message: 'Kategori başarıyla silindi' }), { status: 200 })
+	} catch (error: any) {
+		return new NextResponse('Kategori silinirken bir hata oluştu' + error.message, { status: 500 })
 	}
 }

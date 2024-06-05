@@ -22,11 +22,9 @@ export const GET = async (request: Request) => {
 			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bulunamadı' }), { status: 404 })
 		}
 
-		const categories = await Category.findOneAndDelete({
-			user: new Types.ObjectId(userId)
-		})
+		const category = await Category.find({ user: userId })
 
-		return new NextResponse(JSON.stringify({ categories }), { status: 200 })
+		return new NextResponse(JSON.stringify({ category }), { status: 200 })
 	} catch (error: any) {
 		return new NextResponse('Kategoriler getirilirken bir hata oluştu' + error.message, { status: 500 })
 	}

@@ -12,6 +12,8 @@ export const GET = async (request: Request) => {
 		const userId = searchParams.get('userId')
 		const categoryId = searchParams.get('categoryId')
 
+		const searchKeywords = searchParams.get('keywords')
+
 		if (!userId || !Types.ObjectId.isValid(userId)) {
 			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bilgileri geçersiz' }), { status: 400 })
 		}
@@ -39,7 +41,13 @@ export const GET = async (request: Request) => {
 			category: new Types.ObjectId(categoryId || '')
 		}
 
-		// TODO:
+		// TODO: searchKeywords ile arama yapılacak
+		if (searchKeywords) {
+			filter.$or = [
+				{ title: { $regex: searchKeywords, $options: 'i' } }, // i -> büyük küçük harf duyarlılığı kaldırır
+				{ description: { $regex: searchKeywords, $options: 'i' } }
+			]
+		}
 
 		const blogs = await Blog.find(filter)
 

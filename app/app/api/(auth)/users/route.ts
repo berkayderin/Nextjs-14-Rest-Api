@@ -76,5 +76,29 @@ export const PATCH = async (request: Request) => {
 // kullanıcı silme
 export const DELETE = async (request: Request) => {
 	try {
-	} catch (error) {}
+		const { searchParams } = new URL(request.url)
+		const userId = searchParams.get('userId')
+
+		if (!userId) {
+			return new NextResponse('ID eksik', { status: 400 })
+		}
+
+		if (!Types.ObjectId.isValid(userId)) {
+			return new NextResponse('Geçersiz ID', { status: 400 })
+		}
+
+		await connect()
+
+		const deletedUser = await User.findByIdAndDelete(new Types.ObjectId(userId))
+
+		if (!deletedUser) {
+			return new NextResponse('Kullanıcı bulunamadı', { status: 404 })
+		}
+
+		return new NextResponse(JSON.stringify({ message: 'Kullanıcı başarıyla silindi', user: deletedUser }), {
+			status: 200
+		})
+	} catch (error: any) {
+		return new NextResponse('Kullanıcı silinirken bir hata oluştur' + error.message, { status: 500 })
+	}
 }

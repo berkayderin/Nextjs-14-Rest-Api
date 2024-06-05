@@ -67,11 +67,19 @@ export const POST = async (request: Request) => {
 			return new NextResponse(JSON.stringify({ message: 'Kategori bilgileri geçersiz' }), { status: 400 })
 		}
 
-		if (!title || !description) {
-			return new NextResponse(JSON.stringify({ message: 'Başlık ve açıklama zorunludur' }), { status: 400 })
+		await connect()
+
+		const user = await User.findById(userId)
+
+		if (!user) {
+			return new NextResponse(JSON.stringify({ message: 'Kullanıcı bulunamadı' }), { status: 404 })
 		}
 
-		await connect()
+		const category = await Category.findById(categoryId)
+
+		if (!category) {
+			return new NextResponse(JSON.stringify({ message: 'Kategori bulunamadı' }), { status: 404 })
+		}
 
 		const newBlog = new Blog({
 			title,
